@@ -118,7 +118,7 @@ spec/cucumber/step_mother_spec.rb:48:in `/Three cute (.*)/'
       @dsl.World {}
 
       begin
-        @step_mother.before_and_after(nil) do; end
+        @step_mother.with_hooks(nil) do; end
         raise "Should fail"
       rescue RbSupport::NilWorld => e
         e.message.should == "World procs should never return nil"
@@ -137,12 +137,13 @@ spec/cucumber/step_mother_spec.rb:48:in `/Three cute (.*)/'
 
     it "should implicitly extend world with modules" do
       @dsl.World(ModuleOne, ModuleTwo)
-      @step_mother.before(mock('scenario').as_null_object)
-      class << @rb.current_world
-        included_modules.inspect.should =~ /ModuleOne/ # Workaround for RSpec/Ruby 1.9 issue with namespaces
-        included_modules.inspect.should =~ /ModuleTwo/
+      @step_mother.with_hooks(mock('scenario').as_null_object) do
+        class << @rb.current_world
+          included_modules.inspect.should =~ /ModuleOne/ # Workaround for RSpec/Ruby 1.9 issue with namespaces
+          included_modules.inspect.should =~ /ModuleTwo/
+        end
+        @rb.current_world.class.should == Object
       end
-      @rb.current_world.class.should == Object
     end
 
     it "should raise error when we try to register more than one World proc" do
@@ -152,8 +153,8 @@ spec/cucumber/step_mother_spec.rb:48:in `/Three cute (.*)/'
       end.should raise_error(RbSupport::MultipleWorld, %{You can only pass a proc to #World once, but it's happening
 in 2 places:
 
-spec/cucumber/step_mother_spec.rb:149:in `World'
-spec/cucumber/step_mother_spec.rb:151:in `World'
+spec/cucumber/step_mother_spec.rb:#{__LINE__ - 6}:in `World'
+spec/cucumber/step_mother_spec.rb:#{__LINE__ - 5}:in `World'
 
 Use Ruby modules instead to extend your worlds. See the Cucumber::RbSupport::RbDsl#World RDoc
 or http://wiki.github.com/aslakhellesoy/cucumber/a-whole-new-world.

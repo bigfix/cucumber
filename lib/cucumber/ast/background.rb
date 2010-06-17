@@ -34,10 +34,16 @@ module Cucumber
         visitor.visit_comment(@comment) unless @comment.empty?
         visitor.visit_background_name(@keyword, @name, file_colon_line(@line), source_indent(first_line_length))
         with_visitor(hook_context, visitor) do
-          visitor.step_mother.before(hook_context)
-          visitor.visit_steps(@step_invocations)
-          @failed = @step_invocations.detect{|step_invocation| step_invocation.exception}
-          visitor.step_mother.after(hook_context) if @failed || @feature_elements.empty?
+          # TODO: this isn't correct; the around needs to include the execution of the steps
+          # for the first feature element (either the first scenario or the first example of
+          # the first scenario outline), and the first feature element must then not use #around
+          # (or #with_hooks) itself.
+          visitor.step_mother.around(hook_context) do
+            visitor.step_mother.before(hook_context)
+            visitor.visit_steps(@step_invocations)
+            @failed = @step_invocations.detect{|step_invocation| step_invocation.exception}
+            visitor.step_mother.after(hook_context) if @failed || @feature_elements.empty?
+          end
         end
       end
       

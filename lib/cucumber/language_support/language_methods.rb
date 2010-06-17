@@ -9,19 +9,23 @@ module Cucumber
       end
 
       def around(scenario)
+        begin_scenario(scenario)
         execute_around(scenario) do
           yield
         end
+        end_scenario
       end
 
       def before(scenario)
-        begin_scenario(scenario)
-        execute_before(scenario)
+        hooks_for(:before, scenario).each do |hook|
+          invoke(hook, 'Before', scenario, true)
+        end
       end
 
       def after(scenario)
-        execute_after(scenario)
-        end_scenario
+        hooks_for(:after, scenario).reverse_each do |hook|
+          invoke(hook, 'After', scenario, true)
+        end
       end
 
       def after_configuration(configuration)
@@ -99,18 +103,6 @@ module Cucumber
             end
           end
         end.call
-      end
-
-      def execute_before(scenario)
-        hooks_for(:before, scenario).each do |hook|
-          invoke(hook, 'Before', scenario, true)
-        end
-      end
-
-      def execute_after(scenario)
-        hooks_for(:after, scenario).reverse_each do |hook|
-          invoke(hook, 'After', scenario, true)
-        end
       end
 
       def invoke(hook, location, scenario, exception_fails_scenario, &block)

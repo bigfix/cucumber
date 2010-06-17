@@ -8,13 +8,13 @@ Feature: Around hooks
     And a file named "features/step_definitions/steps.rb" with:
       """
       Then /^the hook is called$/ do
-        $hook_called.should == true
+        @hook_called.should == true
       end
       """
     And a file named "features/support/hooks.rb" with:
       """
       Around do |scenario, block|
-        $hook_called = true
+        @hook_called = true
         block.call
       end
       """
@@ -42,26 +42,26 @@ Feature: Around hooks
     And a file named "features/step_definitions/steps.rb" with:
       """
       Then /^the hooks are called in the correct order$/ do
-        $hooks_called.should == ['A', 'B', 'C']
+        @hooks_called.should == ['A', 'B', 'C']
       end
       """
     And a file named "features/support/hooks.rb" with:
       """
       Around do |scenario, block|
-        $hooks_called ||= []
-        $hooks_called << 'A'
+        @hooks_called ||= []
+        @hooks_called << 'A'
         block.call
       end
 
       Around do |scenario, block|
-        $hooks_called ||= []
-        $hooks_called << 'B'
+        @hooks_called ||= []
+        @hooks_called << 'B'
         block.call
       end
 
       Around do |scenario, block|
-        $hooks_called ||= []
-        $hooks_called << 'C'
+        @hooks_called ||= []
+        @hooks_called << 'C'
         block.call
       end
       """
@@ -89,28 +89,28 @@ Feature: Around hooks
     And a file named "features/step_definitions/steps.rb" with:
       """
       Then /^the Around hook is called around Before and After hooks$/ do
-        $hooks_called.should == ['Around', 'Before']
+        @hooks_called.should == ['Around', 'Before']
       end
       """
     And a file named "features/support/hooks.rb" with:
       """
       Around do |scenario, block|
-        $hooks_called ||= []
-        $hooks_called << 'Around'
+        @hooks_called ||= []
+        @hooks_called << 'Around'
         block.call
-        $hooks_called << 'Around'
-        $hooks_called.should == ['Around', 'Before', 'After', 'Around']
+        @hooks_called << 'Around'
+        @hooks_called.should == ['Around', 'Before', 'After', 'Around']
       end
 
       Before do |scenario|
-        $hooks_called ||= []
-        $hooks_called << 'Before'
+        @hooks_called ||= []
+        @hooks_called << 'Before'
       end
 
       After do |scenario|
-        $hooks_called ||= []
-        $hooks_called << 'After'
-        $hooks_called.should == ['Around', 'Before', 'After']
+        @hooks_called ||= []
+        @hooks_called << 'After'
+        @hooks_called.should == ['Around', 'Before', 'After']
       end
       """
     And a file named "features/f.feature" with:
@@ -137,32 +137,32 @@ Feature: Around hooks
     And a file named "features/step_definitions/steps.rb" with:
       """
       Then /^the Around hooks with matching tags are called$/ do
-        $hooks_called.should == ['one', 'one or two']
+        @hooks_called.should == ['one', 'one or two']
       end
       """
     And a file named "features/support/hooks.rb" with:
       """
       Around('@one') do |scenario, block|
-        $hooks_called ||= []
-        $hooks_called << 'one'
+        @hooks_called ||= []
+        @hooks_called << 'one'
         block.call
       end
 
       Around('@one,@two') do |scenario, block|
-        $hooks_called ||= []
-        $hooks_called << 'one or two'
+        @hooks_called ||= []
+        @hooks_called << 'one or two'
         block.call
       end
 
       Around('@one', '@two') do |scenario, block|
-        $hooks_called ||= []
-        $hooks_called << 'one and two'
+        @hooks_called ||= []
+        @hooks_called << 'one and two'
         block.call
       end
 
       Around('@two') do |scenario, block|
-        $hooks_called ||= []
-        $hooks_called << 'two'
+        @hooks_called ||= []
+        @hooks_called << 'two'
         block.call
       end
       """
@@ -192,13 +192,13 @@ Feature: Around hooks
     And a file named "features/step_definitions/steps.rb" with:
       """
       Then /^the hook is called$/ do
-        $hook_called.should == true
+        @hook_called.should == true
       end
       """
     And a file named "features/support/hooks.rb" with:
       """
       Around do |scenario, block|
-        $hook_called = true
+        @hook_called = true
         block.call
       end
       """
@@ -227,6 +227,47 @@ Feature: Around hooks
             | two    |
 
       2 scenarios (2 passed)
+      2 steps (2 passed)
+
+      """
+
+  Scenario: Around hooks with background
+    Given a standard Cucumber project directory structure
+    And a file named "features/step_definitions/steps.rb" with:
+      """
+      Then /^we are inside the around hook$/ do
+        @in_around.should == true
+      end
+      """
+    And a file named "features/support/hooks.rb" with:
+      """
+      Around do |scenario, block|
+        @in_around = true
+        block.call
+        @in_around = false
+      end
+      """
+    And a file named "features/f.feature" with:
+      """
+      Feature: Around hooks with background
+        Background:
+          Then we are inside the around hook
+
+          Scenario:
+            Then we are inside the around hook
+      """
+    When I run cucumber features/f.feature
+    Then it should pass with
+      """
+      Feature: Around hooks with background
+
+        Background:                          # features/f.feature:2
+          Then we are inside the around hook # features/step_definitions/steps.rb:1
+
+        Scenario:                            # features/f.feature:5
+          Then we are inside the around hook # features/step_definitions/steps.rb:1
+
+      1 scenario (1 passed)
       2 steps (2 passed)
 
       """

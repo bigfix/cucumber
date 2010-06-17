@@ -12,7 +12,7 @@ module Cucumber
         @rb = @step_mother.load_programming_language('rb')
         @dsl = Object.new 
         @dsl.extend Cucumber::RbSupport::RbDsl
-        @step_mother.before(mock('scenario').as_null_object)
+        @scenario = mock('scenario').as_null_object
 
         $inside = nil
       end
@@ -25,7 +25,10 @@ module Cucumber
           $inside = true
         end
 
-        @step_mother.step_match("Outside").invoke(nil)
+        @step_mother.with_hooks(@scenario) do
+          @step_mother.step_match("Outside").invoke(nil)
+        end
+
         $inside.should == true
       end
 
@@ -37,7 +40,10 @@ module Cucumber
           $inside = table.raw[0][0]
         end
 
-        @step_mother.step_match("Outside").invoke(nil)
+        @step_mother.with_hooks(@scenario) do
+          @step_mother.step_match("Outside").invoke(nil)
+        end
+
         $inside.should == 'inside'
       end
 
@@ -47,7 +53,9 @@ module Cucumber
         end
 
         lambda do
-          @step_mother.step_match('Outside').invoke(nil)
+          @step_mother.with_hooks(@scenario) do
+            @step_mother.step_match('Outside').invoke(nil)
+          end
         end.should raise_error(Cucumber::Undefined, 'Undefined step: "Inside"')
       end
 
@@ -57,7 +65,9 @@ module Cucumber
         end
 
         lambda do
-          @step_mother.step_match("Outside").invoke(nil)
+          @step_mother.with_hooks(@scenario) do
+            @step_mother.step_match("Outside").invoke(nil)
+          end
         end.should raise_error(Cucumber::Pending, "Do me!")
       end
 
@@ -78,7 +88,9 @@ module Cucumber
           announce 'wasup'
         end
         
-        @step_mother.step_match("Loud").invoke(nil)
+        @step_mother.with_hooks(@scenario) do
+          @step_mother.step_match("Loud").invoke(nil)
+        end
       end
       
       it "should recognize $arg style captures" do
